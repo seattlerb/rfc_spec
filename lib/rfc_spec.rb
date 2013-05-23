@@ -72,7 +72,9 @@
 #    had the benefit of the experience and discussion that produced the
 #    specification.
 
-class RFCSpec < MiniTest::Unit::TestCase
+require "minitest/unit"
+
+class RFCSpec < Minitest::Test
   VERSION = '1.0.0'
 
   def self.before &block
@@ -136,20 +138,20 @@ class RFCSpec < MiniTest::Unit::TestCase
     end
 
     def __verify test, message = "failed"
-      where = caller.first[/\`(\w+)\'/, 1]
+      where    = caller.first[/\`(\w+)\'/, 1]
       positive = where !~ /_not_/
-      test = ! test unless positive
+      test     = ! test unless positive
 
       result =
-      case where
-      when /^(must|shall|is_required_to)_/ then
-        test or raise Failure, message
-      when /^(should_|is_(not_)?recommended_to|optionally|may)/ then
-        test # TODO: record failed should
-        true # HACK :maybe?
-      else
-        raise "unsupported : #{where.inspect}"
-      end
+        case where
+        when /^(must|shall|is_required_to)_/ then
+          test or raise Failure, message
+        when /^(should_|is_(not_)?recommended_to|optionally|may)/ then
+          # TODO: record failed should
+          true # HACK :maybe?
+        else
+          raise "unsupported : #{where.inspect}"
+        end
 
       result = ! result unless positive
       result
@@ -243,7 +245,7 @@ class RFCSpec < MiniTest::Unit::TestCase
       __verify caught
     end
 
-    methods = self.public_instance_methods(false).sort
+    methods = self.public_instance_methods(false).sort.map(&:to_s)
 
     $levels.to_a.flatten.each do |level|
       next if level == "must"
@@ -260,9 +262,8 @@ class RFCSpec < MiniTest::Unit::TestCase
   end
 end
 
-# HACK this is for my own sanity only
-Object.public_instance_methods.grep(/must|wont/).each do |m|
-  Object.send :remove_method, m
+MiniTest::Expectations.public_instance_methods.grep(/must|wont/).each do |m|
+  MiniTest::Expectations.send :remove_method, m
 end
 
 Object.send :include, RFCSpec::Verifications

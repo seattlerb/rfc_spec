@@ -1,9 +1,13 @@
+require "rubygems"
 require "minitest/autorun"
 require "rfc_spec"
+
+include RFCSpec::Verifications
 
 spec = nil # for test reflection at end of file
 
 rfc_describe RFCSpec do
+
   ############################################################
   # Structural:
 
@@ -31,8 +35,8 @@ rfc_describe RFCSpec do
       top_methods   = %w(after before test_top_level_it)
       inner_methods = %w(      before test_inner_it)
 
-      top_methods.must_equal   x.instance_methods(false).sort.map {|o| o.to_s }
-      inner_methods.must_equal y.instance_methods(false).sort.map {|o| o.to_s }
+      top_methods.must_equal   x.instance_methods(false).sort.map(&:to_s)
+      inner_methods.must_equal y.instance_methods(false).sort.map(&:to_s)
     end
   end
 
@@ -201,9 +205,9 @@ rfc_describe RFCSpec do
     ############################################################
     # 5. MAY
 
-    %w(should should_not may is_not_recommended_to
-     is_recommended_to optionally may).each do |level|
-
+    levels = %w(should should_not may is_not_recommended_to is_recommended_to
+                optionally)
+    levels.each do |level|
       val = !(level =~ /not/)
 
       it "implements #{level}_be" do
@@ -283,11 +287,6 @@ rfc_describe RFCSpec do
         proc {             }.send("#{level}_throw", :blah).must_equal val
         proc { throw :xxx  }.send("#{level}_throw", :blah).must_equal val
       end unless level =~ /not/
-
-      it 'implements #{level}_be_close_to' do
-        42.000.send("#{level}_be_close_to", 42.0).must_equal val
-        42.002.send("#{level}_be_close_to", 42.0).must_equal val
-      end
     end
 
     ############################################################
@@ -295,8 +294,8 @@ rfc_describe RFCSpec do
 
     it "implements capture_io" do
       out, err = capture_io do
-        puts 'hi'
-        warn 'bye!'
+        puts "hi"
+        warn "bye!"
       end
 
       out.must_equal "hi\n"
@@ -312,7 +311,7 @@ class Array
 end
 
 tests = spec.public_instance_methods(false).grepmap(/^test_implements_(\w+)/, 1)
-impls = RFCSpec::Verifications.public_instance_methods(false).sort
+impls = RFCSpec::Verifications.public_instance_methods(false).sort.map(&:to_s)
 
 untested = impls.select { |s| s !~ /^__/ } - tests
 
